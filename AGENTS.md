@@ -67,6 +67,42 @@ Most thinking happens before and after code is written. The Compound step is wha
 
 ---
 
+# Agent Architecture
+
+A request flows left-to-right through four stages. The agent checks procedural memory, loads the matching skill, then executes inside the loop with tools and MCPs.
+
+```text
+User → Procedural Memory (QMD) → Skill Selection → Agent Loop → Execution (Tools / MCP)
+        ~/memory-bank markdown KB   SKILL.md (YAML+md)  Plan→Tool→Observe→Refine   APIs / external systems
+```
+
+Flow:
+
+1. **Preflight** procedural memory with the task keywords (the Memory Bank below is this layer).
+2. **Load** the matching skill (`SKILL.md`: YAML frontmatter + markdown) via progressive disclosure — pull only what the task needs.
+3. **Execute** the agent loop (plan → tool call → observe → refine) with tools and MCP integrations.
+4. **Write notes back** to procedural memory so the next run starts smarter. This is the Compound step.
+
+Procedural memory and skills are the durable, retrievable layers; the loop is transient. Keep knowledge in the first two so it survives across sessions.
+
+---
+
+# The Agent Harness
+
+The LLM is the smallest part of the system; the harness around it does the work. Seven components define a capable agent. Treat each as a first-class concern, not an afterthought.
+
+- **Context & Memory** — what the model sees: working memory, episodic and long-term stores, retrieval/RAG, prompt assembly.
+- **Tools & Action** — how the model acts: tool registry (MCP), dispatch and argument validation, external APIs, permissions and approval gates.
+- **Orchestration & Loop** — how the model thinks: think→act→observe loop, planning and decomposition, sub-agents and delegation, retries/budgets/stop rules.
+- **State & Persistence** — what the model remembers: file system and workspace, checkpoint and resume, session/thread persistence, artifacts and snapshots.
+- **Sandbox & Compute** — where the model runs: isolated workspace, shell/package/git access, network egress controls, credentials kept outside the model.
+- **Observability & Governance** — how you trust the model: tracing and structured logs, evals and regression suites, guardrails and policy, human-in-the-loop.
+- **Cost & Workflow Optimization** — how you choose what runs where: deterministic vs. non-deterministic, model selection (SOTA → small), skills vs. memory encoding, token and latency budgets.
+
+When something is hard or unreliable, the fix usually lives in one of these components — strengthen the harness rather than over-correcting the prompt.
+
+---
+
 # Core Principles
 
 ## 1. Context Before Action
