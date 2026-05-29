@@ -437,6 +437,14 @@ Large instruction files reduce agent performance and increase cost.
 
 ---
 
+# Git Hygiene
+
+- Do not run git write operations (`commit`, `add`, `merge`) from a sandboxed agent against this repo; the mount can block lock cleanup and leave stale `.git/*.lock` files. Stage or edit only, then hand the human a commit command — or let the human commit.
+- If a commit fails with a "cannot lock ref" / "index.lock exists" error, remove the stale locks and retry: `find .git -name '*.lock' -delete`.
+- Do not push or rewrite history unless explicitly asked.
+
+---
+
 # Repository Overrides
 
 Nested or repository-local `AGENTS.md` files override this global file within their scope.
