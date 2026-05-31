@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# init-agents — bootstrap a new project with the canonical agent operating contract.
+#
+# Usage:
+#   init-agents [project-name] [--version <ref>] [--no-git]
+#
+#   project-name   Optional. Creates and enters ./project-name. Omit to use the current directory.
+#   --version ref  Git ref to pull the contract from (tag/branch). Default: main (latest).
+#   --no-git       Skip git init and the initial commit.
+#
+# Examples:
+#   init-agents my-app                  # new dir, latest contract, git initialized
+#   init-agents --version v1.0.0        # current dir, pinned contract
+#
+set -euo pipefail
+
+REPO_RAW="https://raw.githubusercontent.com/lorenzlk/agents.md"
+REF="main"
+PROJECT=""
+DO_GIT=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --version) REF="${2:?--version needs a ref}"; shift 2 ;;
+    --no-git)  DO_GIT=0; shift ;;
+    -*)        echo "Unknown option: $1" >&2; exit 1 ;;
+    *)         PROJECT="$1"; shift ;;
+  esac
+done
+
+if [[ -n "$PROJECT" ]]; then
+  mkdir -p "$PROJECT"
+  cd "$PROJECT"
+fi
+
+echo "Bootstrapping agent contract (ref: $REF) into $(pwd)"
+
+fetch() {
+  # fetch <remote-path> <local-path>
+  curl -fsSL "$REPO_RAW/$REF/$1" -o "$2"
+  echo "  + $2"
+}
+
+fetch "AGENTS.md" "AGENTS.md"
+fetch "templates/CLAUDE.md" "CLAUDE.md"
+
+mkdir -p memory-bank
+: > memory-bank/activeContext.md
+: > memory-bank/systemPatterns.md
+: > memory-bank/techContext.md
+: > memory-bank/progress.md
+
+cat > memory-bank/projectbrief.md <<'EOF'
+# Project Brief
+
+> Fill in from observable facts. Mark unknowns as TODO. Keep it short.
+
+## What this project does
+
+TODO
+
+## Primary users / use case
+
+TODO
+
+## Core goals
+
+- TODO
+
+## Important constraints
+
+- TODO
+EOF
+echo "  + memory-bank/ (scaffolded, projectbrief.md seeded)"
+
+if [[ "$DO_GIT" -eq 1 ]]; then
+  if [[ ! -d .git ]]; then
+    git init -q
+    echo "  + git initialized"
+  fi
+  git add AGENTS.md CLAUDE.md memory-bank
+  git commit -q -m "Bootstrap agent contract from agents.md ($REF)"
+  echo "  + initial commit"
+fi
+
+echo "Done. Next: open in Codex/Cowork and prompt:"
+echo "  \"Read AGENTS.md, then initialize the Memory Bank per its Initialization Rules — observed facts only.\""
